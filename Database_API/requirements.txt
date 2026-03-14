@@ -3,3 +3,4 @@ uvicorn==0.24.0.post1
 pymysql==1.1.0
 PyJWT==2.8.0
 python-dotenv==1.0.0
+cryptography
