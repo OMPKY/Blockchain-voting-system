@@ -1,8 +1,6 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-// 🚨 DEPLOYMENT STEP: 
-// When you deploy your Python API to the cloud, change this to your live URL
-// Example: const PYTHON_API_URL = "https://suiit-python-api.onrender.com";
-const PYTHON_API_URL = "http://127.0.0.1:8080"; 
+
+const PYTHON_API_URL = "https://blockchain-voting-system-1-w5i0.onrender.com"; 
 
 document.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.getElementById('loginForm');

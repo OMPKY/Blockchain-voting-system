@@ -1,7 +1,5 @@
-// 🚨 DEPLOYMENT STEP: 
-// When you deploy your Python API to the cloud, change this to your live URL
-// Example: const PYTHON_API_URL = "https://suiit-python-api.onrender.com";
-const PYTHON_API_URL = "http://127.0.0.1:8080"; 
+
+const PYTHON_API_URL = "https://blockchain-voting-system-1-w5i0.onrender.com"; 
 
 document.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.getElementById('loginForm');
@@ -34,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      // 🔹 Changed to use the dynamic PYTHON_API_URL variable
+      // 🔹 Sending credentials to the LIVE Render Python API
       const response = await fetch(`${PYTHON_API_URL}/login`, {
         method: "POST",
         headers: {
@@ -70,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log("🔗 Using wallet:", walletAddress);
 
       // --- 4. Link Wallet to Aiven DB ---
-      // 🔹 Changed to Relative Path (Node.js handles this)
+      // This goes to your Node.js server (Relative path)
       try {
         const saveWalletResponse = await fetch(
           `/saveWallet?voter_id=${voter_id}&wallet_address=${walletAddress}`
@@ -87,7 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
       // --- 5. Storage & Redirect ---
       localStorage.setItem('voter_id', voter_id);
 
-      // 🔹 Changed to Relative Paths (Node.js handles this)
       if (data.role === 'admin') {
         localStorage.setItem('jwtTokenAdmin', data.token);
         window.location.href = `/admin.html?Authorization=Bearer ${data.token}`;
