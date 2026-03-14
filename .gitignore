@@ -1,0 +1,10 @@
+# Node and Python Dependencies
+node_modules/
+Database_API/__pycache__/
+
+# Security: NEVER upload environment variables
+.env
+Database_API/.env
+
+# OS generated files
+.DS_Store

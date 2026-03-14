@@ -1,0 +1,192 @@
+body {
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: url('../assets/bg.jpg') no-repeat center center fixed;
+  background-size: cover;
+}
+
+
+.modern-title {
+  font-size: 38px;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-bottom: 40px;
+  background: linear-gradient(90deg, #8b16b2, #680f7e, #a719a7, #9e1ab9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 25px rgba(0, 255, 255, 0.3);
+  animation: glowShift 5s infinite alternate;
+}
+
+@keyframes glowShift {
+  from { text-shadow: 0 0 15px rgba(0, 255, 255, 0.3); }
+  to { text-shadow: 0 0 35px rgba(0, 255, 255, 0.6); }
+}
+
+/* 🔹 Outer Login Box */
+.login-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 950px;
+  max-width: 90%;
+  background: rgba(0, 0, 0, 0.65);
+  background-image: url('../assets/bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-blend-mode: multiply;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+}
+
+.login-box:hover {
+  transform: scale(1.02);
+  box-shadow: 0 15px 45px rgba(0, 255, 255, 0.3);
+  border-color: rgba(0, 255, 255, 0.3);
+}
+
+/* 🔹 SUIIT Logo Side (was Panda) */
+.suiitloginbox-side {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: radial-gradient(circle at center, rgba(255,255,255,0.08), rgba(0,0,0,0.5));
+}
+
+#suiitloginbox-image {
+  width: 230px;
+  height: 230px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 25px rgba(0, 255, 255, 0.25);
+  transition: transform 0.5s ease, box-shadow 0.5s ease;
+}
+
+#suiitloginbox-image:hover {
+  transform: scale(1.07);
+  box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
+}
+
+/* 🔹 Form Side */
+.form-side {
+  flex: 1.2;
+  padding: 50px;
+  color: #fff;
+  text-align: left;
+}
+
+.form-side h1 {
+  font-size: 34px;
+  color: #00ffff;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+label {
+  display: block;
+  font-size: 15px;
+  color: #eaeaea;
+  margin-bottom: 5px;
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #000;
+  background-color: #ffffffd9;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+input:focus {
+  outline: none;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+  transform: scale(1.02);
+}
+
+button {
+  width: 50%; /* Reduced width */
+  display: block;
+  margin: 25px auto 0; /* Centers the button horizontally */
+  padding: 14px;
+  background: linear-gradient(135deg, #146b61, #198a7b);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  cursor: pointer;
+  font-weight: bold;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, #198a7b, #44afa1);
+  box-shadow: 0 0 25px rgba(0, 255, 255, 0.5);
+}
+
+
+/* 🔹 College Logo (top-left corner) */
+#college-logo {
+  position: absolute;
+  top: 20px;
+  left: 25px;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+#college-logo:hover {
+  transform: scale(1.15) rotate(5deg);
+  box-shadow: 0 0 25px rgba(0, 255, 255, 0.8);
+}
+
+/* 🔹 Responsive Design */
+@media (max-width: 900px) {
+  .login-box {
+    flex-direction: column;
+    width: 90%;
+  }
+
+  .suiitloginbox-side {
+    padding: 30px 0;
+  }
+
+  .form-side {
+    padding: 30px 20px;
+  }
+
+  #suiitloginbox-image {
+    width: 180px;
+    height: 180px;
+  }
+
+  .modern-title {
+    font-size: 28px;
+  }
+}
