@@ -6,8 +6,8 @@ var VotingContract = contract(votingArtifacts);
 window.VotingContract = VotingContract;
 
 // --- Live Sepolia Configuration ---
-const LIVE_CONTRACT_ADDRESS = "0xd4e3D7b07428b9dC678df06e754926EEac3AABAe";
-const INFURA_URL = "https://sepolia.infura.io/v3/07bd698e4b1640eda6169cd2bbfc10cb";
+const LIVE_CONTRACT_ADDRESS = "0xd4e3D7b07428b9dC678df06e754926EEac3AABAe"; // Your new contract!
+const INFURA_URL = "https://ethereum-sepolia-rpc.publicnode.com";
 
 function toNum(x) {
   if (x == null) return 0;
@@ -64,7 +64,6 @@ window.App = {
       if (typeof window.ethereum !== 'undefined') {
         await window.ethereum.request({ method: 'eth_requestAccounts' });
         
-        // --- AUTOMATIC NETWORK SWITCHER ---
         const chainId = await window.ethereum.request({ method: 'eth_chainId' });
         const sepoliaChainId = '0xaa36a7';
 
@@ -75,13 +74,8 @@ window.App = {
               method: 'wallet_switchEthereumChain',
               params: [{ chainId: sepoliaChainId }],
             });
-            console.log("✅ Successfully switched to Sepolia.");
           } catch (switchError) {
-            if (switchError.code === 4902) {
-              alert("Please add the Sepolia Testnet to your MetaMask.");
-            } else {
-              alert("You must switch to the Sepolia network in MetaMask to use this application.");
-            }
+            alert("Please switch to the Sepolia Testnet in your MetaMask.");
             return; 
           }
         }
@@ -96,42 +90,21 @@ window.App = {
 
       // 2. Account Check
       App.account = (window.ethereum && window.ethereum.selectedAddress) || (await window.eth.eth.getAccounts())[0];
-      
       if (App.account) {
           VotingContract.defaults({ from: App.account, gas: 1000000 }); 
       }
 
       // 3. Robust Instance Loading
-      let instance;
-      try {
-          const code = await window.eth.eth.getCode(LIVE_CONTRACT_ADDRESS);
-          if (code === '0x' || code === '0x0') {
-              throw new Error("MetaMask is not on Sepolia. Please switch networks.");
-          }
-          instance = await VotingContract.at(LIVE_CONTRACT_ADDRESS);
-      } catch (e) {
-          console.warn("Retrying contract connection in 2s...");
-          await new Promise(res => setTimeout(res, 2000));
-          instance = await VotingContract.at(LIVE_CONTRACT_ADDRESS);
-      }
-
+      let instance = await VotingContract.at(LIVE_CONTRACT_ADDRESS);
       window.VotingInstance = instance;
-      console.log("✅ Voting contract loaded live at:", instance.address);
 
       renderAdminCandidatesBox();
 
-      // 4. Wallet Link Logic 
+      // 4. Wallet Link Logic
       const voter_id = localStorage.getItem("voter_id");
       if (voter_id && App.account) {
         try {
-          const saveResponse = await fetch(`/saveWallet?voter_id=${encodeURIComponent(voter_id)}&wallet_address=${encodeURIComponent(App.account)}`);
-          const saveData = await saveResponse.json();
-          console.log("💾 Database Save Status:", saveData);
-
-          if (saveData.error === 'ER_DUP_ENTRY' || (saveData.message && saveData.message.toLowerCase().includes('duplicate'))) {
-             alert("⚠️ URGENT WARNING: This MetaMask account is already registered! \n\nPlease switch accounts and refresh.");
-             $("#msg").html("<p style='color:red;'>⚠️ Wallet belongs to another voter.</p>");
-          }
+          fetch(`/saveWallet?voter_id=${encodeURIComponent(voter_id)}&wallet_address=${encodeURIComponent(App.account)}`);
         } catch (e) { console.warn("Wallet link skipped:", e.message); }
       }
 
@@ -140,10 +113,8 @@ window.App = {
         $('#addCandidate').off('click').on('click', async function () {
           const $status = $(this).closest('.container').find('#Aday'); 
           const nameCandidate = $('#name').val()?.trim(), partyCandidate = $('#party').val()?.trim();
-          if (!nameCandidate || !partyCandidate) {
-            $status.html("<span style='color:red;'>Fill all details!</span>");
-            return;
-          }
+          if (!nameCandidate || !partyCandidate) return $status.html("<span style='color:red;'>Fill all details!</span>");
+          
           $status.html("<span style='color:lime;'>Confirm in MetaMask...</span>");
           try {
             const receipt = await instance.addCandidate(nameCandidate, partyCandidate);
@@ -161,9 +132,10 @@ window.App = {
           const $status = $(this).closest('.container').find('#Aday');
           try {
             const sIn = document.getElementById("startDate").value, eIn = document.getElementById("endDate").value;
-            if (!sIn || !eIn) { $status.html("<span style='color:red;'>Select dates!</span>"); return; }
+            if (!sIn || !eIn) return $status.html("<span style='color:red;'>Select dates!</span>"); 
             const sTs = Math.floor(new Date(`${sIn}T00:00:00`).getTime() / 1000);
             const eTs = Math.floor(new Date(`${eIn}T23:59:59`).getTime() / 1000);
+            
             $status.html("<span style='color:lime;'>Setting dates...</span>");
             const receipt = await instance.setDates(sTs, eTs);
             if (txOk(receipt)) {
@@ -199,27 +171,32 @@ window.App = {
         } catch (e) { console.error('Load candidates failed.'); }
       }
 
-      // 7. Check if already voted
+      // 🔹 FIX 1: UNLOCK THE VOTE BUTTON! 
       if ($('#voteButton').length) {
         try {
           const hasVoted = await instance.checkVote();
           if (hasVoted) {
-            $("#voteButton").attr("disabled", true);
+            $("#voteButton").prop("disabled", true);
             $("#msg").html("<p style='color:red;'>⚠️ You have already voted.</p>");
+          } else {
+            // IF THEY HAVEN'T VOTED, UNLOCK THE BUTTON SO IT CAN BE CLICKED
+            $("#voteButton").prop("disabled", false); 
           }
-        } catch (e) { console.warn('checkVote failed:', e); }
+        } catch (e) { 
+          // If the check fails (e.g. dates not set), unlock it anyway so the click handler can show the error message!
+          $("#voteButton").prop("disabled", false); 
+        }
       }
 
       $('#refreshAdminCandidates').off('click').on('click', function () {
         renderAdminCandidatesBox();
       });
 
-      // 🔹 8. ADDED LOGOUT HANDLER 
-      $('.logout, #logout, .btn-logout').on('click', function (e) {
+      // LOGOUT HANDLER
+      $('.logout, #logout, .btn-logout, #logoutBtn').on('click', function (e) {
           e.preventDefault();
-          console.log("🚪 Logging out...");
-          localStorage.clear(); // Wipe the JWT tokens and Voter ID
-          window.location.replace("/"); // Redirect to live homepage
+          localStorage.clear(); 
+          window.location.replace("/"); 
       });
 
     } catch (err) {
@@ -227,6 +204,7 @@ window.App = {
     }
   },
 
+  // 🔹 FIX 2: RESTORED FULL VOTING LOGIC & DATE WARNINGS
   vote: async function () {
     const candidateID = $("input[name='candidate']:checked").val();
     if (!candidateID) {
@@ -235,7 +213,11 @@ window.App = {
     }
 
     try {
-      if (!window.ethereum) return;
+      if (!window.ethereum) {
+        $("#msg").html("<p style='color:red;'>❌ MetaMask not detected.</p>");
+        return;
+      }
+      
       let accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       const currentWallet = accounts[0];
 
@@ -248,37 +230,65 @@ window.App = {
 
       const instance = window.VotingInstance || await VotingContract.at(LIVE_CONTRACT_ADDRESS);
 
-      // Verify wallet against Backend
-      const verifyResponse = await fetch(`/checkWallet?voter_id=${encodeURIComponent(voter_id)}`);
-      const verifyData = await verifyResponse.json();
-      const dbWallet = verifyData.wallet_address || verifyData.wallet;
+      // --- DATE CHECKING WARNINGS ---
+      try {
+        const dates = await instance.getDates();
+        const startTs = toNum(dates[0]);
+        const endTs   = toNum(dates[1]);
+        const nowTs   = Math.floor(Date.now() / 1000);
+        
+        if (!startTs || !endTs || startTs === 0 || endTs === 0) {
+          $("#msg").html("<p style='color:red;'>❌ Voting dates are not set yet.</p>");
+          return;
+        }
+        if (nowTs < startTs) {
+          $("#msg").html(`<p style='color:red;'>❌ Voting hasn't started yet.</p>`);
+          return;
+        }
+        if (nowTs >= endTs) {
+          $("#msg").html(`<p style='color:red;'>❌ Voting has ended.</p>`);
+          return;
+        }
+      } catch (e) {
+        $("#msg").html("<p style='color:red;'>❌ Cannot verify voting dates.</p>");
+        return; 
+      }
 
-      if (!dbWallet || dbWallet.toLowerCase() !== currentWallet.toLowerCase()) {
-        $("#msg").html("<p style='color:red;'>🚫 Unauthorized wallet!</p>");
-        return;
+      // Verify wallet against Backend
+      try {
+        const verifyResponse = await fetch(`/checkWallet?voter_id=${encodeURIComponent(voter_id)}`);
+        const verifyData = await verifyResponse.json();
+        const dbWallet = verifyData.wallet_address || verifyData.wallet;
+
+        if (!dbWallet || dbWallet.toLowerCase() !== currentWallet.toLowerCase()) {
+          $("#msg").html("<p style='color:red;'>🚫 Unauthorized wallet! Please switch MetaMask to your registered wallet.</p>");
+          return;
+        }
+      } catch(e) {
+         console.warn("Wallet check bypassed or backend offline.");
       }
 
       // Cast vote
       $("#msg").html("<p style='color:lime;'>Casting vote... Confirm in MetaMask.</p>");
       try {
         const receipt = await instance.vote(parseInt(candidateID, 10), { from: currentWallet });
-        $("#voteButton").attr("disabled", true);
+        $("#voteButton").prop("disabled", true);
         $("#msg").html("<p>✅ Vote cast successfully!</p>");
         setTimeout(() => location.reload(), 2000);
       } catch (err) {
-        $("#msg").html("<p style='color:red;'>❌ Voting failed.</p>");
+        console.error("MetaMask Error:", err);
+        $("#msg").html("<p style='color:red;'>❌ Voting failed or was rejected.</p>");
       }
 
     } catch (err) {
-      $("#msg").html("<p style='color:red;'>Error during voting.</p>");
+      console.error("General Error:", err);
+      $("#msg").html("<p style='color:red;'>Error during voting process.</p>");
     }
   }
 };
 
-// Account change
 if (window.ethereum) {
   window.ethereum.on('accountsChanged', () => window.location.reload());
 }
 
-// Init
 window.addEventListener("load", () => window.App.eventStart());
