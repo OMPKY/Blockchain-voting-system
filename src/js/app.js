@@ -187,7 +187,17 @@ window.App = {
           else {
             const hasVoted = await instance.checkVote({ from: App.account });
             if (hasVoted) {
-              $("#msg").html("<p style='color:red;'>⚠️ You have already voted.</p>");
+              // 📍 LOCATION B: ALREADY VOTED WITH SAVED HASH
+              const savedHash = localStorage.getItem(`txHash_${App.account.toLowerCase()}`);
+              if (savedHash) {
+                $("#msg").html(`
+                  <p style='color:red;'>⚠️ You have already voted.</p>
+                  <p style='font-size: 14px;'>🧾 Blockchain Receipt: <a href="https://sepolia.etherscan.io/tx/${savedHash}" target="_blank" style="color: #007bff; text-decoration: underline;">${savedHash.substring(0, 15)}...</a></p>
+                  <p style='font-size: 12px; color: #666;'>(Click to verify on Etherscan)</p>
+                `);
+              } else {
+                $("#msg").html("<p style='color:red;'>⚠️ You have already voted.</p>");
+              }
             } else {
               // ALL CHECKS PASSED: Unlock the button!
               $("#voteButton").prop("disabled", false); 
@@ -288,9 +298,23 @@ window.App = {
       $("#msg").html("<p style='color:lime;'>Casting vote... Confirm in MetaMask.</p>");
       try {
         const receipt = await instance.vote(parseInt(candidateID, 10), { from: currentWallet });
+        
+        // 📍 LOCATION A: IMMEDIATE SUCCESS WITH HASH
+        const txHash = receipt.tx;
+        
+        // Save the hash securely in local storage tied to their wallet
+        localStorage.setItem(`txHash_${currentWallet.toLowerCase()}`, txHash);
+
         $("#voteButton").prop("disabled", true);
-        $("#msg").html("<p>✅ Vote cast successfully!</p>");
-        setTimeout(() => location.reload(), 2000);
+        $("#msg").html(`
+          <p style='color:lime;'>✅ Vote cast successfully!</p>
+          <p style='font-size: 14px;'>🧾 Blockchain Receipt: <a href="https://sepolia.etherscan.io/tx/${txHash}" target="_blank" style="color: #007bff; text-decoration: underline;">${txHash.substring(0, 15)}...</a></p>
+          <p style='font-size: 12px; color: #666;'>(Click to verify your vote on Etherscan)</p>
+        `);
+        
+        // Increased the delay to 10 seconds so the user has time to click the link before the page refreshes!
+        setTimeout(() => location.reload(), 10000); 
+
       } catch (err) {
         console.error("MetaMask Error:", err);
         $("#msg").html("<p style='color:red;'>❌ Voting failed or was rejected.</p>");
