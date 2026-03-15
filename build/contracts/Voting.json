@@ -5725,12 +5725,12 @@
     "11155111": {
       "events": {},
       "links": {},
-      "address": "0x435bE236fd7D1af94B7f0552b097fA5508DCc9A2",
-      "transactionHash": "0x5a0366bd56c76599432ec94748011a08086c95d41c71d65267cd0862454d90a0"
+      "address": "0xd4e3D7b07428b9dC678df06e754926EEac3AABAe",
+      "transactionHash": "0x293f173b1188b904c298bae9eff918bc0ff73697dcb72be9c3e7e1a13c5a8285"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2026-03-14T00:09:03.647Z",
+  "updatedAt": "2026-03-15T15:42:25.440Z",
   "networkType": "ethereum",
   "devdoc": {
     "methods": {}

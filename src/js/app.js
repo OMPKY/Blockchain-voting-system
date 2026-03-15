@@ -6,7 +6,7 @@ var VotingContract = contract(votingArtifacts);
 window.VotingContract = VotingContract;
 
 // --- Live Sepolia Configuration ---
-const LIVE_CONTRACT_ADDRESS = "0x435bE236fd7D1af94B7f0552b097fA5508DCc9A2";
+const LIVE_CONTRACT_ADDRESS = "0xd4e3D7b07428b9dC678df06e754926EEac3AABAe";
 const INFURA_URL = "https://sepolia.infura.io/v3/07bd698e4b1640eda6169cd2bbfc10cb";
 
 function toNum(x) {
@@ -120,7 +120,7 @@ window.App = {
 
       renderAdminCandidatesBox();
 
-      // 4. Wallet Link Logic (✅ LIVE CLOUD DEPLOYMENT READY)
+      // 4. Wallet Link Logic 
       const voter_id = localStorage.getItem("voter_id");
       if (voter_id && App.account) {
         try {
@@ -214,7 +214,7 @@ window.App = {
         renderAdminCandidatesBox();
       });
 
-      // 🔹 8. ADDED LOGOUT HANDLER (FIXES LOCALHOST REDIRECT)
+      // 🔹 8. ADDED LOGOUT HANDLER 
       $('.logout, #logout, .btn-logout').on('click', function (e) {
           e.preventDefault();
           console.log("🚪 Logging out...");

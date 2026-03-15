@@ -12,6 +12,7 @@ module.exports = {
       provider: () => new HDWalletProvider({
         privateKeys: [process.env.ADMIN_PRIVATE_KEY, process.env.USER_PRIVATE_KEY],
         providerOrUrl: process.env.INFURA_URL,
+        pollingInterval: 15000 // 🔹 FIX: Slows down block polling so Infura doesn't crash
       }),
       network_id: 11155111,
       gas: 4465030,
