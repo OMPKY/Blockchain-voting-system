@@ -6,7 +6,7 @@ var VotingContract = contract(votingArtifacts);
 window.VotingContract = VotingContract;
 
 // --- Live Sepolia Configuration ---
-const LIVE_CONTRACT_ADDRESS = "0xd4e3D7b07428b9dC678df06e754926EEac3AABAe"; // Your new contract!
+const LIVE_CONTRACT_ADDRESS = "0xd4e3D7b07428b9dC678df06e754926EEac3AABAe";
 const INFURA_URL = "https://ethereum-sepolia-rpc.publicnode.com";
 
 function toNum(x) {
@@ -100,15 +100,9 @@ window.App = {
 
       renderAdminCandidatesBox();
 
-      // 4. Wallet Link Logic
       const voter_id = localStorage.getItem("voter_id");
-      if (voter_id && App.account) {
-        try {
-          fetch(`/saveWallet?voter_id=${encodeURIComponent(voter_id)}&wallet_address=${encodeURIComponent(App.account)}`);
-        } catch (e) { console.warn("Wallet link skipped:", e.message); }
-      }
 
-      // 5. Admin Actions
+      // 4. Admin Actions
       if ($('#addCandidate').length) {
         $('#addCandidate').off('click').on('click', async function () {
           const $status = $(this).closest('.container').find('#Aday'); 
@@ -155,7 +149,7 @@ window.App = {
         } catch (err) { console.error("Get dates failed."); }
       }
 
-      // 6. Voter Logic (List generation)
+      // 5. Voter Logic (List generation)
       if ($('#boxCandidate').length) {
         try {
           const count = toNum(await instance.getCountCandidates());
@@ -171,19 +165,37 @@ window.App = {
         } catch (e) { console.error('Load candidates failed.'); }
       }
 
-      // 🔹 FIX 1: UNLOCK THE VOTE BUTTON! 
-      if ($('#voteButton').length) {
+      // 🔹 6. STRICT WALLET & VOTING STATE CHECKS (UI LOCKOUT)
+      if ($('#voteButton').length && voter_id) {
+        $("#voteButton").prop("disabled", true); // Default to disabled while checking
+
         try {
-          const hasVoted = await instance.checkVote();
-          if (hasVoted) {
-            $("#voteButton").prop("disabled", true);
-            $("#msg").html("<p style='color:red;'>⚠️ You have already voted.</p>");
-          } else {
-            // IF THEY HAVEN'T VOTED, UNLOCK THE BUTTON SO IT CAN BE CLICKED
-            $("#voteButton").prop("disabled", false); 
+          // Verify wallet against Backend first
+          const verifyResponse = await fetch(`/checkWallet?voter_id=${encodeURIComponent(voter_id)}`);
+          const verifyData = await verifyResponse.json();
+          const dbWallet = verifyData.wallet_address || verifyData.wallet;
+
+          // Check 1: Wallet is NULL (not registered)
+          if (!dbWallet || dbWallet === "null" || dbWallet === "") {
+             $("#msg").html("<p style='color:red;'>⚠️ Your wallet is not registered for voting. Please contact the Admin.</p>");
+          } 
+          // Check 2: Using someone else's wallet
+          else if (dbWallet.toLowerCase() !== App.account.toLowerCase()) {
+             $("#msg").html("<p style='color:red;'>🚫 This MetaMask wallet is registered to another user. Please switch to your registered wallet.</p>");
+          } 
+          // Check 3: Wallet is correct, now check if already voted
+          else {
+            const hasVoted = await instance.checkVote({ from: App.account });
+            if (hasVoted) {
+              $("#msg").html("<p style='color:red;'>⚠️ You have already voted.</p>");
+            } else {
+              // ALL CHECKS PASSED: Unlock the button!
+              $("#voteButton").prop("disabled", false); 
+            }
           }
         } catch (e) { 
-          // If the check fails (e.g. dates not set), unlock it anyway so the click handler can show the error message!
+          console.warn("State check error:", e);
+          // Unlock button so clicking it can show date warnings if that's the issue
           $("#voteButton").prop("disabled", false); 
         }
       }
@@ -204,7 +216,7 @@ window.App = {
     }
   },
 
-  // 🔹 FIX 2: RESTORED FULL VOTING LOGIC & DATE WARNINGS
+  // 🔹 7. STRICT CHECKS ON BUTTON CLICK
   vote: async function () {
     const candidateID = $("input[name='candidate']:checked").val();
     if (!candidateID) {
@@ -230,6 +242,24 @@ window.App = {
 
       const instance = window.VotingInstance || await VotingContract.at(LIVE_CONTRACT_ADDRESS);
 
+      // Verify wallet against Backend ONE MORE TIME
+      try {
+        const verifyResponse = await fetch(`/checkWallet?voter_id=${encodeURIComponent(voter_id)}`);
+        const verifyData = await verifyResponse.json();
+        const dbWallet = verifyData.wallet_address || verifyData.wallet;
+
+        if (!dbWallet || dbWallet === "null" || dbWallet === "") {
+          $("#msg").html("<p style='color:red;'>⚠️ Your wallet is not registered for voting. Please contact the Admin.</p>");
+          return;
+        }
+        if (dbWallet.toLowerCase() !== currentWallet.toLowerCase()) {
+          $("#msg").html("<p style='color:red;'>🚫 This MetaMask wallet is registered to another user. Please switch to your registered wallet.</p>");
+          return;
+        }
+      } catch(e) {
+         console.warn("Wallet check bypassed or backend offline.");
+      }
+
       // --- DATE CHECKING WARNINGS ---
       try {
         const dates = await instance.getDates();
@@ -252,20 +282,6 @@ window.App = {
       } catch (e) {
         $("#msg").html("<p style='color:red;'>❌ Cannot verify voting dates.</p>");
         return; 
-      }
-
-      // Verify wallet against Backend
-      try {
-        const verifyResponse = await fetch(`/checkWallet?voter_id=${encodeURIComponent(voter_id)}`);
-        const verifyData = await verifyResponse.json();
-        const dbWallet = verifyData.wallet_address || verifyData.wallet;
-
-        if (!dbWallet || dbWallet.toLowerCase() !== currentWallet.toLowerCase()) {
-          $("#msg").html("<p style='color:red;'>🚫 Unauthorized wallet! Please switch MetaMask to your registered wallet.</p>");
-          return;
-        }
-      } catch(e) {
-         console.warn("Wallet check bypassed or backend offline.");
       }
 
       // Cast vote
