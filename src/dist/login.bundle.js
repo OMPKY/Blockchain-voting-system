@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      // 🔹 Changed to use the dynamic PYTHON_API_URL variable
+      
       const response = await fetch(`${PYTHON_API_URL}/login`, {
         method: "POST",
         headers: {
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log("🔗 Using wallet:", walletAddress);
 
       // --- 4. Link Wallet to Aiven DB ---
-      // 🔹 Changed to Relative Path (Node.js handles this)
+
       try {
         const saveWalletResponse = await fetch(
           `/saveWallet?voter_id=${voter_id}&wallet_address=${walletAddress}`
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // --- 5. Storage & Redirect ---
       localStorage.setItem('voter_id', voter_id);
 
-      // 🔹 Changed to Relative Paths (Node.js handles this)
+      
       if (data.role === 'admin') {
         localStorage.setItem('jwtTokenAdmin', data.token);
         window.location.href = `/admin.html?Authorization=Bearer ${data.token}`;

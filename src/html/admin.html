@@ -8,9 +8,9 @@
   <link rel="stylesheet" type="text/css" href="../css/admin.css">
 
   <script>
-    // 🔹 FIX 1: Security redirect points to Web Server (3000)
+
     if (!localStorage.getItem('jwtTokenAdmin')) {
-      window.location.replace("http://localhost:3000/");
+      window.location.replace("/"); 
     }
   </script>
 </head>
@@ -33,7 +33,8 @@
         </tr>
       </table>
       <input id="addCandidate" type="submit" name="submit" value="Add Candidate">
-      <p id="Aday"></p> </div>
+      <p id="Aday"></p> 
+    </div>
 
     <div class="container right-container">
       <legend>Set Voting Date</legend>
@@ -79,10 +80,11 @@
   <script src="../dist/app.bundle.js" type="module"></script>
 
   <script>
-    // 🔹 FIX 2: Logout clears all data and redirects to Web Server (3000)
+    // 🔹 Logout clears all data and redirects to live homepage "/"
     document.getElementById("logoutBtn").addEventListener("click", function() {
-      localStorage.clear(); // Wipes jwtTokenAdmin, jwtTokenVoter, and voter_id
-      window.location.replace("http://localhost:3000/");
+      console.log("🚪 Logging out...");
+      localStorage.clear(); 
+      window.location.replace("/"); 
     });
   </script>
 </body>

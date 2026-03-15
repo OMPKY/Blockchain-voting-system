@@ -85,7 +85,6 @@ window.App = {
             return; 
           }
         }
-        // ----------------------------------
 
         window.eth = new Web3(window.ethereum);
         VotingContract.setProvider(window.ethereum);
@@ -99,7 +98,7 @@ window.App = {
       App.account = (window.ethereum && window.ethereum.selectedAddress) || (await window.eth.eth.getAccounts())[0];
       
       if (App.account) {
-          VotingContract.defaults({ from: App.account, gas: 1000000 }); // Safer gas limit for live
+          VotingContract.defaults({ from: App.account, gas: 1000000 }); 
       }
 
       // 3. Robust Instance Loading
@@ -129,12 +128,11 @@ window.App = {
           const saveData = await saveResponse.json();
           console.log("💾 Database Save Status:", saveData);
 
-          // Trigger warning if database says the wallet is a duplicate
           if (saveData.error === 'ER_DUP_ENTRY' || (saveData.message && saveData.message.toLowerCase().includes('duplicate'))) {
-             alert("⚠️ URGENT WARNING: The MetaMask account you are currently using is already registered to another voter! \n\nPlease open MetaMask, switch to a different account, and refresh this page.");
-             $("#msg").html("<p style='color:red;'>⚠️ This wallet belongs to someone else. Please switch your MetaMask account.</p>");
+             alert("⚠️ URGENT WARNING: This MetaMask account is already registered! \n\nPlease switch accounts and refresh.");
+             $("#msg").html("<p style='color:red;'>⚠️ Wallet belongs to another voter.</p>");
           }
-        } catch (e) { console.warn("Wallet link skipped or failed:", e.message); }
+        } catch (e) { console.warn("Wallet link skipped:", e.message); }
       }
 
       // 5. Admin Actions
@@ -142,12 +140,10 @@ window.App = {
         $('#addCandidate').off('click').on('click', async function () {
           const $status = $(this).closest('.container').find('#Aday'); 
           const nameCandidate = $('#name').val()?.trim(), partyCandidate = $('#party').val()?.trim();
-
           if (!nameCandidate || !partyCandidate) {
             $status.html("<span style='color:red;'>Fill all details!</span>");
             return;
           }
-
           $status.html("<span style='color:lime;'>Confirm in MetaMask...</span>");
           try {
             const receipt = await instance.addCandidate(nameCandidate, partyCandidate);
@@ -166,10 +162,8 @@ window.App = {
           try {
             const sIn = document.getElementById("startDate").value, eIn = document.getElementById("endDate").value;
             if (!sIn || !eIn) { $status.html("<span style='color:red;'>Select dates!</span>"); return; }
-
             const sTs = Math.floor(new Date(`${sIn}T00:00:00`).getTime() / 1000);
             const eTs = Math.floor(new Date(`${eIn}T23:59:59`).getTime() / 1000);
-
             $status.html("<span style='color:lime;'>Setting dates...</span>");
             const receipt = await instance.setDates(sTs, eTs);
             if (txOk(receipt)) {
@@ -212,17 +206,20 @@ window.App = {
           if (hasVoted) {
             $("#voteButton").attr("disabled", true);
             $("#msg").html("<p style='color:red;'>⚠️ You have already voted.</p>");
-          } else {
-            $("#voteButton").attr("disabled", false);
           }
-        } catch (e) { 
-          console.warn('checkVote failed:', e); 
-          $("#voteButton").attr("disabled", false); 
-        }
+        } catch (e) { console.warn('checkVote failed:', e); }
       }
 
       $('#refreshAdminCandidates').off('click').on('click', function () {
         renderAdminCandidatesBox();
+      });
+
+      // 🔹 8. ADDED LOGOUT HANDLER (FIXES LOCALHOST REDIRECT)
+      $('.logout, #logout, .btn-logout').on('click', function (e) {
+          e.preventDefault();
+          console.log("🚪 Logging out...");
+          localStorage.clear(); // Wipe the JWT tokens and Voter ID
+          window.location.replace("/"); // Redirect to live homepage
       });
 
     } catch (err) {
@@ -230,9 +227,6 @@ window.App = {
     }
   },
 
-  // -------------------------
-  // USER VOTING FUNCTION
-  // -------------------------
   vote: async function () {
     const candidateID = $("input[name='candidate']:checked").val();
     if (!candidateID) {
@@ -241,121 +235,49 @@ window.App = {
     }
 
     try {
-      // 1) Ensure MetaMask and get current account
-      if (!window.ethereum) {
-        $("#msg").html("<p style='color:red;'>❌ MetaMask not detected.</p>");
-        return;
-      }
-      let accounts = [];
-      try {
-        accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      } catch (e) {
-        $("#msg").html("<p style='color:red;'>❌ Please connect your wallet.</p>");
-        return;
-      }
-      const currentWallet = accounts && accounts[0] ? accounts[0] : null;
-      if (!currentWallet) {
-        $("#msg").html("<p style='color:red;'>❌ No wallet connected.</p>");
-        return;
-      }
+      if (!window.ethereum) return;
+      let accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const currentWallet = accounts[0];
 
-      // 2) Session check (✅ LIVE CLOUD DEPLOYMENT READY)
       const voter_id = localStorage.getItem("voter_id");
       if (!voter_id) {
-        alert("Login session expired. Please log in again.");
+        alert("Session expired.");
         window.location.replace("/");
         return;
       }
 
       const instance = window.VotingInstance || await VotingContract.at(LIVE_CONTRACT_ADDRESS);
 
-      // 3) Pre-check voting window
-      try {
-        const dates = await instance.getDates();
-        const startTs = toNum(dates[0]);
-        const endTs   = toNum(dates[1]);
-        const nowTs   = Math.floor(Date.now() / 1000);
-        
-        if (!startTs || !endTs || startTs === 0 || endTs === 0) {
-          $("#msg").html("<p style='color:red;'>❌ Voting dates are not set yet.</p>");
-          return;
-        }
-        if (nowTs < startTs) {
-          $("#msg").html(`<p style='color:red;'>❌ Voting hasn't started yet. Starts: ${new Date(startTs*1000).toLocaleString()}</p>`);
-          return;
-        }
-        if (nowTs >= endTs) {
-          $("#msg").html(`<p style='color:red;'>❌ Voting has ended. Ended: ${new Date(endTs*1000).toLocaleString()}</p>`);
-          return;
-        }
-      } catch (e) {
-        console.warn("Could not read dates:", e?.message || e);
-        $("#msg").html("<p style='color:red;'>❌ Voting dates are not set yet.</p>");
-        return; 
-      }
+      // Verify wallet against Backend
+      const verifyResponse = await fetch(`/checkWallet?voter_id=${encodeURIComponent(voter_id)}`);
+      const verifyData = await verifyResponse.json();
+      const dbWallet = verifyData.wallet_address || verifyData.wallet;
 
-      // 4) Wallet authorization against Backend (✅ LIVE CLOUD DEPLOYMENT READY)
-      let verifyResponse;
-      try {
-        verifyResponse = await fetch(`/checkWallet?voter_id=${encodeURIComponent(voter_id)}`);
-      } catch (e) {
-        $("#msg").html("<p style='color:red;'>❌ API connection error. Ensure your Node backend is running.</p>");
+      if (!dbWallet || dbWallet.toLowerCase() !== currentWallet.toLowerCase()) {
+        $("#msg").html("<p style='color:red;'>🚫 Unauthorized wallet!</p>");
         return;
       }
 
-      let verifyData = {};
-      try {
-        verifyData = await verifyResponse.json();
-        console.log("🔍 Database returned:", verifyData);
-      } catch (e) {
-        console.warn("Could not parse wallet verification response.");
-      }
-
-      const dbWallet = verifyData.wallet_address || verifyData.wallet || verifyData.address || verifyData.walletAddress;
-
-      if (!dbWallet || dbWallet === "null") {
-        $("#msg").html("<p style='color:red;'>❌ No wallet registered for this voter. Please click the purple Logout button and log back in to link your wallet.</p>");
-        return;
-      }
-
-      if (dbWallet.toLowerCase() !== currentWallet.toLowerCase()) {
-        $("#msg").html("<p style='color:red;'>🚫 Unauthorized wallet! Please switch your MetaMask back to your original registered wallet to vote.</p>");
-        return;
-      }
-
-      // 5) Cast vote
+      // Cast vote
       $("#msg").html("<p style='color:lime;'>Casting vote... Confirm in MetaMask.</p>");
       try {
         const receipt = await instance.vote(parseInt(candidateID, 10), { from: currentWallet });
-        console.log("vote receipt:", receipt);
         $("#voteButton").attr("disabled", true);
         $("#msg").html("<p>✅ Vote cast successfully!</p>");
         setTimeout(() => location.reload(), 2000);
       } catch (err) {
-        console.error("Voting failed:", err);
-        const raw = (err && (err.message || err.toString())) || "";
-        if (raw.toLowerCase().includes("already voted")) {
-          $("#msg").html("<p style='color:red;'>You have already voted. You cannot vote again.</p>");
-        } else if (raw.toLowerCase().includes("revert")) {
-          $("#msg").html("<p style='color:red;'>❌ Transaction reverted. Likely outside the voting window.</p>");
-        } else {
-          $("#msg").html("<p style='color:red;'>❌ Voting failed. Check console for details.</p>");
-        }
+        $("#msg").html("<p style='color:red;'>❌ Voting failed.</p>");
       }
 
     } catch (err) {
-      console.error("Voting process failed:", err?.message || err);
-      $("#msg").html("<p style='color:red;'>Error during voting process. Please retry.</p>");
+      $("#msg").html("<p style='color:red;'>Error during voting.</p>");
     }
   }
 };
 
 // Account change
 if (window.ethereum) {
-  window.ethereum.on('accountsChanged', function (accounts) {
-    console.log("Account changed:", accounts[0]);
-    window.location.reload();
-  });
+  window.ethereum.on('accountsChanged', () => window.location.reload());
 }
 
 // Init

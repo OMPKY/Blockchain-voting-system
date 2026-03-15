@@ -9,9 +9,9 @@
     <link rel="stylesheet" type="text/css" href="../css/index.css">
     
     <script>
-      // 🔹 FIX 1: Security redirect points to Web Server (3000)
+      // 🔹 FIX 1: Security redirect points to the live homepage "/"
       if (!localStorage.getItem('jwtTokenVoter')) {
-        window.location.replace("http://localhost:3000/");
+        window.location.replace("/");
       }
     </script>
   </head>
@@ -55,10 +55,11 @@
     <script src="../dist/app.bundle.js" type="module"></script>
 
     <script>
-      // 🔹 FIX 2: Logout clears all data and redirects to Web Server (3000)
+      // 🔹 FIX 2: Logout clears all data and redirects to live homepage "/"
       document.getElementById("logoutBtn").addEventListener("click", function() {
+        console.log("🚪 Voter Logging out...");
         localStorage.clear(); // Wipes jwtTokenVoter and voter_id
-        window.location.replace("http://localhost:3000/");
+        window.location.replace("/");
       });
     </script>
   </body>

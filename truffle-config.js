@@ -11,11 +11,11 @@ module.exports = {
     sepolia: {
       provider: () => new HDWalletProvider({
         privateKeys: [process.env.ADMIN_PRIVATE_KEY, process.env.USER_PRIVATE_KEY],
-        providerOrUrl: process.env.INFURA_URL, // This now uses the wss:// link
+        providerOrUrl: process.env.INFURA_URL,
       }),
       network_id: 11155111,
       gas: 4465030,
-      confirmations: 1,       // Low confirmations for faster testing
+      confirmations: 1,       
       timeoutBlocks: 500,
       networkCheckTimeout: 1000000, 
       skipDryRun: true

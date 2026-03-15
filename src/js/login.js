@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      // 🔹 Sending credentials to the LIVE Render Python API
+      
       const response = await fetch(`${PYTHON_API_URL}/login`, {
         method: "POST",
         headers: {
@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      let accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      let accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       let walletAddress = accounts[0];
 
       if (!walletAddress) {
@@ -68,10 +68,10 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log("🔗 Using wallet:", walletAddress);
 
       // --- 4. Link Wallet to Aiven DB ---
-      // This goes to your Node.js server (Relative path)
+      
       try {
         const saveWalletResponse = await fetch(
-          `/saveWallet?voter_id=${voter_id}&wallet_address=${walletAddress}`
+          `/saveWallet?voter_id=${encodeURIComponent(voter_id)}&wallet_address=${encodeURIComponent(walletAddress)}`
         );
         const walletResult = await saveWalletResponse.json();
 
@@ -85,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // --- 5. Storage & Redirect ---
       localStorage.setItem('voter_id', voter_id);
 
+      
       if (data.role === 'admin') {
         localStorage.setItem('jwtTokenAdmin', data.token);
         window.location.href = `/admin.html?Authorization=Bearer ${data.token}`;
