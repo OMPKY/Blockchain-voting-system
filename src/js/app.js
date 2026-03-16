@@ -6,7 +6,7 @@ var VotingContract = contract(votingArtifacts);
 window.VotingContract = VotingContract;
 
 // --- Live Sepolia Configuration ---
-const LIVE_CONTRACT_ADDRESS = "0xd4e3D7b07428b9dC678df06e754926EEac3AABAe";
+const LIVE_CONTRACT_ADDRESS = "0x662EDbAe308D3F25c254D9e099bf96B8a6122246";
 const INFURA_URL = "https://ethereum-sepolia-rpc.publicnode.com";
 
 function toNum(x) {
